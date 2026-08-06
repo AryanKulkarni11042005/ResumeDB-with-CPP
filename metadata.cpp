@@ -137,6 +137,16 @@ public:
 private: 
     std::vector<ResumeEntry> entries;
 };
+std::string stripQuotes(const std::string& s) {
+    if (s.size() >= 2) {
+        char first = s.front();
+        char last = s.back();
+        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+            return s.substr(1, s.size() - 2);
+        }
+    }
+    return s;
+}
 int main(){
     ResumeStore store;
     store.loadFromFile("resume_db.json");
@@ -144,6 +154,7 @@ int main(){
 
     std::cout << "Resume file path: ";
     std::getline(std::cin, path);
+    path = stripQuotes(path);
 
     std::cout << "Original filename: ";
     std::getline(std::cin, originalName);
