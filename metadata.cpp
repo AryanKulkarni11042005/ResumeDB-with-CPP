@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include <filesystem>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -108,23 +109,62 @@ ResumeEntry insertResume(const std::string& path,const std::string& originalFile
                                 entry.dateUploaded = getTimeStamp();
                                 std::string extractedResumeText = extractTextFromPDF(path);
                                 entry.embedding = getEmbedding(extractedResumeText);
-                                std::string timeStamp = getTimeStamp();
                                 std::string storedPath = copyResumeToStorage(entry.path, entry.companyName, entry.role);
                                 entry.path = storedPath;
                                 return entry;
-                            }
-int main(){
-    ResumeEntry entry = insertResume(
-        "/Users/aryankulkarni/Desktop/Company Applications/Resume/Aryan_Kulkarni_Resume_Microsoft.pdf",
-        "Aryan_Kulkarni_Resume_Microsoft.pdf",
-        "Microsoft",
-        "SoftwareEngineer1",
-        "More C++ and Cloud",
-        "applied"
-    );
+}
 
-    std::cout << "Stored at: " << entry.path << std::endl;
-    std::cout << "Embedding size: " << entry.embedding.size() << std::endl;
+class ResumeStore{
+public:
+    void addEntry(const ResumeEntry& entry){
+        entries.push_back(entry);
+    }
+    void saveToFile(const std::string& filePath){
+        json j = entries;
+        std::ofstream out(filePath);
+        out << j.dump(4);
+    }
+    void loadFromFile(const std::string& filePath){
+        std::ifstream in(filePath);
+        if(!in) return;
+        json j;
+        in >> j;
+        entries = j.get<std::vector<ResumeEntry>>();
+    }
+    long long entriesCount() const{
+        return entries.size();
+    }
+private: 
+    std::vector<ResumeEntry> entries;
+};
+int main(){
+    ResumeStore store;
+    store.loadFromFile("resume_db.json");
+    std::string path, originalName, company, role, version, status;
+
+    std::cout << "Resume file path: ";
+    std::getline(std::cin, path);
+
+    std::cout << "Original filename: ";
+    std::getline(std::cin, originalName);
+
+    std::cout << "Company: ";
+    std::getline(std::cin, company);
+
+    std::cout << "Role: ";
+    std::getline(std::cin, role);
+
+    std::cout << "Version name: ";
+    std::getline(std::cin, version);
+
+    std::cout << "Status: ";
+    std::getline(std::cin, status);
+
+    ResumeEntry entry = insertResume(path, originalName, company, role, version, status);
+    store.addEntry(entry);
+    store.saveToFile("resume_db.json");
+    long long count = store.entriesCount();
+    std::cout << "Saved. Total resumes stored: " << count << std::endl;
 
     return 0;
 }
