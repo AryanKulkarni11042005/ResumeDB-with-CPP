@@ -8,6 +8,7 @@
 #include <sstream>
 #include <filesystem>
 #include <fstream>
+#include <cmath>
 
 namespace fs = std::filesystem;
 
@@ -96,6 +97,27 @@ std::string copyResumeToStorage(const std::string& sourcePath, const std::string
 }
 /// MAIN STARTS HERE
 
+
+float dotProduct(const std::vector<float>& a, const std::vector<float>& b) {
+    float sum = 0;
+    for (int i = 0; i < a.size(); i++) {
+        sum += a[i] * b[i];
+    }
+    return sum;
+}
+
+float magnitude(const std::vector<float>& v) {
+    float sum = 0;
+    for (int i = 0; i < v.size(); i++) {
+        sum += v[i] * v[i];
+    }
+    return sqrt(sum);
+}
+
+float cosineSimilarity(const std::vector<float>& a, const std::vector<float>& b) {
+    return dotProduct(a, b) / (magnitude(a) * magnitude(b));
+}
+
 ResumeEntry insertResume(const std::string& path,const std::string& originalFileName, 
                             const std::string& companyName, const std::string& role, 
                             const std::string& version, const std::string& status){
@@ -131,9 +153,27 @@ public:
         in >> j;
         entries = j.get<std::vector<ResumeEntry>>();
     }
+    int search(const std::string& queryText) const {
+        std::vector<float> queryEmbedding = getEmbedding(queryText);
+        int bestIdx = - 1;
+        float bestScore = -1.0f;
+        for(int i = 0; i<entries.size();i++){
+            float score = cosineSimilarity(queryEmbedding, entries[i].embedding);
+            if(score>bestScore){
+                bestScore = score;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+    ResumeEntry getEntry(int index) const {
+        return entries[index];
+    }
     long long entriesCount() const{
         return entries.size();
     }
+
+    
 private: 
     std::vector<ResumeEntry> entries;
 };
@@ -150,32 +190,60 @@ std::string stripQuotes(const std::string& s) {
 int main(){
     ResumeStore store;
     store.loadFromFile("resume_db.json");
-    std::string path, originalName, company, role, version, status;
 
-    std::cout << "Resume file path: ";
-    std::getline(std::cin, path);
-    path = stripQuotes(path);
+    while (true) {
+        std::cout << "\n1. Insert Resume\n2. Search\n3. Exit\nChoice: ";
+        int choice;
+        std::cin >> choice;
+        std::cin.ignore();   // important — explained below
 
-    std::cout << "Original filename: ";
-    std::getline(std::cin, originalName);
+        switch (choice) {
+            case 1: {
+                std::string path, originalName, company, role, version, status;
 
-    std::cout << "Company: ";
-    std::getline(std::cin, company);
+                std::cout << "Resume file path: ";
+                std::getline(std::cin, path);
+                path = stripQuotes(path);
 
-    std::cout << "Role: ";
-    std::getline(std::cin, role);
+                std::cout << "Original filename: ";
+                std::getline(std::cin, originalName);
 
-    std::cout << "Version name: ";
-    std::getline(std::cin, version);
+                std::cout << "Company: ";
+                std::getline(std::cin, company);
 
-    std::cout << "Status: ";
-    std::getline(std::cin, status);
+                std::cout << "Role: ";
+                std::getline(std::cin, role);
 
-    ResumeEntry entry = insertResume(path, originalName, company, role, version, status);
-    store.addEntry(entry);
-    store.saveToFile("resume_db.json");
-    long long count = store.entriesCount();
-    std::cout << "Saved. Total resumes stored: " << count << std::endl;
+                std::cout << "Version name: ";
+                std::getline(std::cin, version);
 
-    return 0;
+                std::cout << "Status: ";
+                std::getline(std::cin, status);
+
+                ResumeEntry entry = insertResume(path, originalName, company, role, version, status);
+                store.addEntry(entry);
+                store.saveToFile("resume_db.json");
+                std::cout << "Saved. Total resumes stored: " << store.entriesCount() << std::endl;
+                break;
+            }
+            case 2: {
+                std::cout << "Search for something: ";
+                std::string query;
+                std::getline(std::cin, query);
+
+                int idx = store.search(query);
+                if (idx != -1) {
+                    ResumeEntry match = store.getEntry(idx);
+                    std::cout << "Best match: " << match.companyName << " - " << match.role << " - " << match.path << std::endl;
+                } else {
+                    std::cout << "No resumes stored yet." << std::endl;
+                }
+                break;
+            }
+            case 3:
+                return 0;
+            default:
+                std::cout << "Invalid choice." << std::endl;
+        }
+    }
 }
