@@ -15,6 +15,7 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 struct ResumeEntry {
+    int id;
     std::string path;              
     std::string originalFileName;  
     std::string companyName;
@@ -24,7 +25,7 @@ struct ResumeEntry {
     std::string dateUploaded;
     std::vector<float> embedding;
     
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResumeEntry, path, originalFileName, companyName, role, versionName, status, dateUploaded, embedding);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResumeEntry, id, path, originalFileName, companyName, role, versionName, status, dateUploaded, embedding);
 
 };
 size_t WriteCallBack(void* contents, size_t size, size_t nmemb, std::string* userp){
@@ -138,7 +139,8 @@ ResumeEntry insertResume(const std::string& path,const std::string& originalFile
 
 class ResumeStore{
 public:
-    void addEntry(const ResumeEntry& entry){
+    void addEntry(ResumeEntry& entry){
+        entry.id = entries.size();
         entries.push_back(entry);
     }
     void saveToFile(const std::string& filePath){
@@ -152,6 +154,9 @@ public:
         json j;
         in >> j;
         entries = j.get<std::vector<ResumeEntry>>();
+        for(int i = 0 ; i< entries.size(); i++){
+            entries[i].id = i;
+        }
     }
     int search(const std::string& queryText) const {
         std::vector<float> queryEmbedding = getEmbedding(queryText);
@@ -166,8 +171,13 @@ public:
         }
         return bestIdx;
     }
-    ResumeEntry getEntry(int index) const {
-        return entries[index];
+    ResumeEntry getEntry(int id) const {
+        for(const auto& entry: entries){
+            if(entry.id == id){
+                return entry;
+            }
+        }
+        throw std::runtime_error("No Resume found for this ID");
     }
     long long entriesCount() const{
         return entries.size();
