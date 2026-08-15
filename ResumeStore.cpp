@@ -17,7 +17,7 @@ ResumeEntry insertResume(const std::string& path, const std::string& originalFil
     entry.status = status;
     entry.dateUploaded = getTimeStamp();
     std::string extractedResumeText = extractTextFromPDF(path);
-    entry.embedding = getEmbedding(extractedResumeText);
+    entry.embedding = getEmbeddingHF(extractedResumeText);
     std::string storedPath = copyResumeToStorage(entry.path, entry.companyName, entry.role);
     entry.path = storedPath;
     return entry;
@@ -46,7 +46,7 @@ void ResumeStore::loadFromFile(const std::string& filePath){
 }
 
 int ResumeStore::search(const std::string& queryText) const {
-    std::vector<float> queryEmbedding = getEmbedding(queryText);
+    std::vector<float> queryEmbedding = getEmbeddingHF(queryText);
     int bestIdx = -1;
     float bestScore = -1.0f;
     for(int i = 0; i < entries.size(); i++){

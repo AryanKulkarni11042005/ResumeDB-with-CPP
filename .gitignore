@@ -5,3 +5,5 @@ apiCalls.cpp
 metadata
 tasks.json
 resumedb.dSYM/Contents
+.env
+build/.env
