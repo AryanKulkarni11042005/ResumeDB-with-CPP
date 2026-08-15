@@ -1,0 +1,5 @@
+build/
+resume_storage/
+resume_db.json
+.env
+.git/
