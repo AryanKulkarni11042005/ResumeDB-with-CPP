@@ -1,0 +1,3 @@
+/Users/aryankulkarni/Desktop/BE/c++/ResumeDB/build/CMakeFiles/resumedb.dir
+/Users/aryankulkarni/Desktop/BE/c++/ResumeDB/build/CMakeFiles/edit_cache.dir
+/Users/aryankulkarni/Desktop/BE/c++/ResumeDB/build/CMakeFiles/rebuild_cache.dir
