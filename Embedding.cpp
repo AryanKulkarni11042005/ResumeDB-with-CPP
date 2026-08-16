@@ -59,7 +59,6 @@ std::string getEnvVar(const std::string& key){
 
 std::vector<float> getEmbeddingHF(const std::string& text){
     std::string apiKey = getEnvVar("HF_TOKEN");
-    std::cout << "TOKEN: [" << apiKey << "]" << std::endl;
     json requestBody;
     requestBody["inputs"] = text;
     std::string body = requestBody.dump();
@@ -82,7 +81,6 @@ std::vector<float> getEmbeddingHF(const std::string& text){
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
     }
-    std::cout << "RAW HF RESPONSE: " << response << std::endl;
     json parsed = json::parse(response);
     return parsed.get<std::vector<float>>(); 
 }

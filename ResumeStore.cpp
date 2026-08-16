@@ -37,10 +37,16 @@ void ResumeStore::saveToFile(const std::string& filePath){
 void ResumeStore::loadFromFile(const std::string& filePath){
     std::ifstream in(filePath);
     if(!in) return;
+    in.seekg(0, std::ios::end);
+    if(in.tellg() == 0){
+        return;
+    }
+    in.seekg(0,std::ios::beg);
+
     json j;
     in >> j;
     entries = j.get<std::vector<ResumeEntry>>();
-    for(int i = 0; i < entries.size(); i++){
+    for(int i = 0; i<entries.size(); i++){
         entries[i].id = i;
     }
 }
